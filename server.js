@@ -27,9 +27,17 @@ app.use(express.static('public')); // Serve static files if needed
 // Initialize highscores.json if it doesn't exist
 async function initializeHighScores() {
     try {
+        console.log('Checking for highscores.json file...');
         await fs.access(HIGHSCORES_FILE);
+        console.log('highscores.json already exists');
+        
+        // Read and log the current scores
+        const currentScores = await readHighScores();
+        console.log('Current high scores:', currentScores);
+        
     } catch (error) {
         // File doesn't exist, create it with default scores
+        console.log('highscores.json not found, creating with default scores...');
         const defaultScores = [
             { player: 'ACE', score: 10000 },
             { player: 'HERO', score: 9000 },
@@ -42,8 +50,15 @@ async function initializeHighScores() {
             { player: 'LEGEND', score: 2000 },
             { player: 'MASTER', score: 1000 }
         ];
-        await fs.writeFile(HIGHSCORES_FILE, JSON.stringify(defaultScores, null, 2));
-        console.log('Created highscores.json with default scores');
+        
+        try {
+            await fs.writeFile(HIGHSCORES_FILE, JSON.stringify(defaultScores, null, 2));
+            console.log('Successfully created highscores.json with default scores');
+            console.log('Default scores:', defaultScores);
+        } catch (writeError) {
+            console.error('Failed to create highscores.json:', writeError);
+            throw writeError;
+        }
     }
 }
 
@@ -84,7 +99,12 @@ function validateScore(player, score) {
 // GET /highscores - Return current high scores
 app.get('/highscores', async (req, res) => {
     try {
+        console.log('GET /highscores request received');
+        console.log('Request headers:', req.headers);
+        
         const scores = await readHighScores();
+        console.log('Returning scores:', scores);
+        
         res.json(scores);
     } catch (error) {
         console.error('Error getting high scores:', error);
